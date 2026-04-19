@@ -11,6 +11,50 @@ A real-time **Retrieval-Augmented Generation (RAG)** AI assistant that combines 
 - **Live Web Search** — Retrieves real-time search results from DuckDuckGo to ground the LLM's answers in current information.
 - **RAG Pipeline** — Uses LangChain to chain search → prompt → LLM into a single, clean pipeline.
 - **Interactive CLI** — Simple command-line chat interface; type a question, get an answer.
+- **100% Free & Unlimited** — No API keys, no subscriptions. Runs entirely on your machine.
+
+---
+
+## 🎯 What Can You Use It For?
+
+### ✅ Great For
+
+| Use Case | Example Question |
+|---|---|
+| 📰 **Current events & news** | "What happened in tech today?" |
+| 🔍 **Fact-checking** | "Is it true that X happened?" |
+| 📚 **Research & learning** | "What are the side effects of vitamin D?" |
+| 💡 **Explanations** | "Explain quantum computing in simple terms" |
+| ⚖️ **Comparisons** | "Compare React vs Angular in 2026" |
+| 🛠️ **How-to guides** | "How to apply for a US visa?" |
+| 🛒 **Product lookups** | "What is the latest iPhone model?" |
+| 📊 **Market & trends** | "What are trending programming languages?" |
+| 🌍 **Travel info** | "Best time to visit Japan?" |
+| 🏥 **Health questions** | "What are symptoms of dehydration?" |
+
+> Essentially — **any question that can be answered by a web search + AI reasoning**.
+
+### ⚠️ Limitations
+
+| Limitation | Details |
+|---|---|
+| **No memory** | Each question is independent; it doesn't remember previous chat |
+| **No file upload** | It only searches the web, not your local files |
+| **Text only** | No image, audio, or video input/output |
+| **English works best** | LLaMA 3 8B is strongest in English |
+| **Speed depends on hardware** | Needs ~8 GB RAM; GPU speeds things up |
+| **Search quality varies** | DuckDuckGo results may not always be perfectly relevant |
+
+### 📊 Usage Limits
+
+| Resource | Limit |
+|---|---|
+| **Ollama / LLaMA 3** | ♾️ Unlimited — local, no cost |
+| **DuckDuckGo Search** | ~20–50 queries/min before throttling |
+| **Disk Space** | ~4.7 GB for the model |
+| **RAM** | ~8 GB while running |
+
+> 💡 You can run it **24/7** with no subscription fees. The only constraint is DuckDuckGo's soft rate limit for rapid-fire queries.
 
 ---
 
@@ -32,7 +76,7 @@ User Question
          │ formatted prompt
          ▼
 ┌─────────────────┐
-│  LLaMA 3 (8B)   │  ← Local LLM generates answer
+│  LLaMA 3 (8B)  │  ← Local LLM generates answer
 │  via Ollama     │
 └────────┬────────┘
          │
@@ -104,6 +148,14 @@ Type any question and press **Enter**. Type `exit` or `quit` to stop.
 You: What is the latest news about AI?
 🤖 Thinking...
 🤖: Based on the search results, here are the latest developments in AI...
+
+You: What are the symptoms of vitamin D deficiency?
+🤖 Thinking...
+🤖: According to the search results, common symptoms include fatigue,
+    bone pain, muscle weakness...
+
+You: exit
+🤖 Goodbye!
 ```
 
 ---
@@ -141,6 +193,10 @@ llm = OllamaLLM(model="llama3:8b")  # ← change model name here
 - [**DuckDuckGo Search**](https://pypi.org/project/duckduckgo-search/) — Privacy-focused web search API
 
 ---
+
+## 📄 License
+
+This project is open-source. Feel free to use, modify, and distribute.
 
 ## 📄 License
 
