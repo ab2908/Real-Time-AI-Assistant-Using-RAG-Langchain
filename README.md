@@ -32,7 +32,7 @@ User Question
          │ formatted prompt
          ▼
 ┌─────────────────┐
-│  LLaMA 3 (8B)  │  ← Local LLM generates answer
+│  LLaMA 3 (8B)   │  ← Local LLM generates answer
 │  via Ollama     │
 └────────┬────────┘
          │
@@ -139,17 +139,6 @@ llm = OllamaLLM(model="llama3:8b")  # ← change model name here
 - [**Ollama**](https://ollama.com/) — Local LLM runtime
 - [**LLaMA 3**](https://ollama.com/library/llama3) — Meta's open-source large language model
 - [**DuckDuckGo Search**](https://pypi.org/project/duckduckgo-search/) — Privacy-focused web search API
-
----
-
-## 🐛 Troubleshooting
-
-| Problem | Solution |
-|---|---|
-| `ConnectionError` when running | Make sure Ollama is running (`ollama serve`) |
-| Model not found | Run `ollama pull llama3:8b` first |
-| Slow responses | The 8B model needs ~8 GB RAM; close other heavy apps |
-| Search returns no results | Check your internet connection |
 
 ---
 
