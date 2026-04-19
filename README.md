@@ -194,9 +194,7 @@ llm = OllamaLLM(model="llama3:8b")  # ← change model name here
 
 ---
 
-## 📄 License
 
-This project is open-source. Feel free to use, modify, and distribute.
 
 ## 📄 License
 
