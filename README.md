@@ -1,15 +1,17 @@
 # Real-Time-AI-Assistant-Using-RAG-Langchain
-Developed a real-time AI assistant using a RAG framework with live web retrieval and open source LLMs to improve factual accuracy and response relevance.
+Developed a real-time AI assistant using a hybrid RAG framework with FAISS-indexed internal documents, live web retrieval, and open source LLMs to improve factual accuracy and response relevance.
 
-A real-time **Retrieval-Augmented Generation (RAG)** AI assistant that combines the power of a local LLM ([LLaMA 3 8B](https://ollama.com/library/llama3) via [Ollama](https://ollama.com/)) with live web search ([DuckDuckGo](https://duckduckgo.com/)) to answer your questions with up-to-date information.
+A **Retrieval-Augmented Generation (RAG)** AI assistant that fuses two sources of context — a local **FAISS** vector index over your own documents, and live **DuckDuckGo** web search — before asking a local LLM (any [Ollama](https://ollama.com/)-served chat model — defaults to **DeepSeek-R1 7B**) to produce a grounded, sourced answer. Every run is scored and logged for latency and groundedness.
 
 ---
 
 ## ✨ Features
 
-- **Local LLM** — Runs LLaMA 3 (8B) locally through Ollama, keeping your data private.
-- **Live Web Search** — Retrieves real-time search results from DuckDuckGo to ground the LLM's answers in current information.
-- **RAG Pipeline** — Uses LangChain to chain search → prompt → LLM into a single, clean pipeline.
+- **Local LLM** — Runs an open-source chat model (DeepSeek-R1, Gemma 3, Llama 3, Qwen, etc.) locally through Ollama, keeping your data private.
+- **Hybrid Retrieval** — Combines a FAISS vector search over your own indexed documents with live DuckDuckGo web search, run in parallel.
+- **Context Fusion** — Merges and caps both retrieval branches into a single top-K context block before it ever reaches the LLM.
+- **Sourced Answers** — Every answer is printed alongside the specific internal documents / web pages it was grounded in.
+- **Evaluation** — Each turn logs per-stage latency plus an LLM-judged groundedness score to `eval_logs/runs.jsonl`.
 - **Interactive CLI** — Simple command-line chat interface; type a question, get an answer.
 - **100% Free & Unlimited** — No API keys, no subscriptions. Runs entirely on your machine.
 
@@ -41,18 +43,18 @@ A real-time **Retrieval-Augmented Generation (RAG)** AI assistant that combines 
 | **No memory** | Each question is independent; it doesn't remember previous chat |
 | **No file upload** | It only searches the web, not your local files |
 | **Text only** | No image, audio, or video input/output |
-| **English works best** | LLaMA 3 8B is strongest in English |
-| **Speed depends on hardware** | Needs ~8 GB RAM; GPU speeds things up |
+| **English works best** | Most local models are strongest in English |
+| **Speed depends on hardware** | Needs ~4-8 GB RAM depending on the model; GPU speeds things up |
 | **Search quality varies** | DuckDuckGo results may not always be perfectly relevant |
 
 ### 📊 Usage Limits
 
 | Resource | Limit |
 |---|---|
-| **Ollama / LLaMA 3** | ♾️ Unlimited — local, no cost |
+| **Ollama / local LLM** | ♾️ Unlimited — local, no cost |
 | **DuckDuckGo Search** | ~20–50 queries/min before throttling |
-| **Disk Space** | ~4.7 GB for the model |
-| **RAM** | ~8 GB while running |
+| **Disk Space** | ~3-5 GB for the chat model + ~275 MB for the embedding model |
+| **RAM** | ~4-8 GB while running, depending on the model |
 
 > 💡 You can run it **24/7** with no subscription fees. The only constraint is DuckDuckGo's soft rate limit for rapid-fire queries.
 
@@ -61,28 +63,66 @@ A real-time **Retrieval-Augmented Generation (RAG)** AI assistant that combines 
 ## 🏗️ Architecture
 
 ```
-User Question
-      │
-      ▼
-┌─────────────────┐
-│  DuckDuckGo     │  ← Web search for relevant context
-│  Search Tool    │
-└────────┬────────┘
-         │ search results
-         ▼
-┌─────────────────┐
-│  Prompt Template│  ← Injects context + question
-└────────┬────────┘
-         │ formatted prompt
-         ▼
-┌─────────────────┐
-│  LLaMA 3 (8B)  │  ← Local LLM generates answer
-│  via Ollama     │
-└────────┬────────┘
-         │
-         ▼
-      Answer
+                      USER
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │ User Query   │
+                    └──────┬───────┘
+                           │
+                           ▼
+                  ┌──────────────────┐
+                  │ Query Processing │
+                  └────────┬─────────┘
+                           │
+              ┌────────────┴────────────┐
+              │                         │
+              ▼                         ▼
+     ┌─────────────────┐       ┌─────────────────┐
+     │ Vector Search   │       │  Web Retrieval  │
+     │     FAISS       │       │   DuckDuckGo    │
+     │                 │       │                 │
+     │ Internal Docs   │       │ Current Data    │
+     └────────┬────────┘       └────────┬────────┘
+              │                         │
+              └────────────┬────────────┘
+                           ▼
+                 ┌──────────────────┐
+                 │ Context Fusion   │
+                 └────────┬─────────┘
+                          │
+                          ▼
+                 ┌──────────────────┐
+                 │ Top-K Relevant   │
+                 │ Context          │
+                 └────────┬─────────┘
+                          │
+                          ▼
+                 ┌──────────────────┐
+                 │ Prompt Template  │
+                 │ Query + Context  │
+                 └────────┬─────────┘
+                          │
+                          ▼
+                 ┌──────────────────┐
+                 │ Chat LLM         │
+                 │ via Ollama        │
+                 └────────┬─────────┘
+                          │
+                          ▼
+                 ┌──────────────────┐
+                 │ Grounded Answer  │
+                 │ + Sources        │
+                 └────────┬─────────┘
+                          │
+                          ▼
+                 ┌──────────────────┐
+                 │ Evaluation       │
+                 │ Accuracy/Latency │
+                 └──────────────────┘
 ```
+
+The two retrieval branches (FAISS over `docs/`, and DuckDuckGo web search) run **in parallel**. `retrieval.py` implements both branches plus `fuse_context()` (Context Fusion + Top-K selection); `pipeline.py` wires the whole thing together and times each stage; `evaluation.py` scores groundedness and appends a JSON record per turn to `eval_logs/runs.jsonl`.
 
 ---
 
@@ -92,7 +132,8 @@ User Question
 |---|---|
 | **Python** | 3.9 or higher |
 | **Ollama** | Installed and running ([download](https://ollama.com/download)) |
-| **LLaMA 3 model** | Pulled via Ollama (see setup below) |
+| **A chat model** | Any Ollama-served chat model — default is `deepseek-r1:7b` (see setup below) |
+| **nomic-embed-text model** | Pulled via Ollama, used for FAISS embeddings (see setup below) |
 
 ---
 
@@ -108,23 +149,34 @@ cd "Rag Ai assistant"
 ### 2. Install Python dependencies
 
 ```bash
-pip install langchain-ollama langchain-community langchain-core duckduckgo-search
+pip install -r requirements.txt
 ```
 
 ### 3. Install & start Ollama
 
 Download Ollama from [ollama.com/download](https://ollama.com/download) and install it for your OS.
 
-### 4. Pull the LLaMA 3 model
+### 4. Pull the LLM and embedding models
 
 ```bash
-ollama pull llama3:8b
+ollama pull deepseek-r1:7b
+ollama pull nomic-embed-text
 ```
 
 > [!NOTE]
-> The model is approximately **4.7 GB**. Make sure you have enough disk space and a stable internet connection.
+> Already have other Ollama models pulled (Llama 3, Gemma 3, Qwen, etc.)? You can point `LLM_MODEL` in `config.py` at any of them instead — see [Configuration](#️-configuration) below. `nomic-embed-text` (~275 MB) is still required either way, since it's the embedding model FAISS uses; a chat model can't substitute for it. `deepseek-r1` is a reasoning model that internally produces `<think>...</think>` output before its final answer — in testing this integrated cleanly with the groundedness/correctness scoring in `evaluation.py`, but if you swap in a different reasoning model and see scores that look off, check whether raw `<think>` text is leaking into the parsed response.
 
-### 5. Run the assistant
+### 5. Build the FAISS index over your internal documents
+
+Drop `.md` / `.txt` / `.pdf` files into `docs/` (a couple of markdown samples are included so this works out of the box), then run:
+
+```bash
+python ingest.py
+```
+
+Re-run this any time you add, remove, or edit files in `docs/`.
+
+### 6. Run the assistant
 
 ```bash
 python assistant.py
@@ -149,10 +201,12 @@ You: What is the latest news about AI?
 🤖 Thinking...
 🤖: Based on the search results, here are the latest developments in AI...
 
-You: What are the symptoms of vitamin D deficiency?
-🤖 Thinking...
-🤖: According to the search results, common symptoms include fatigue,
-    bone pain, muscle weakness...
+📚 Sources:
+  [1] internal: docs/sample_notes.md
+  [2] web: https://example.com/some-article
+
+⏱️  vector=42.1ms | web=610.4ms (parallel) | llm=2950.7ms | total=3605.9ms
+📊 groundedness: 4/5
 
 You: exit
 🤖 Goodbye!
@@ -164,33 +218,73 @@ You: exit
 
 ```
 Rag Ai assistant/
-├── assistant.py    # Main application — RAG chain & chat loop
-└── README.md       # This file
+├── assistant.py     # CLI entry point — chat loop, prints answer/sources/eval
+├── config.py         # Models, paths, chunk size, top-K settings
+├── ingest.py         # Builds/rebuilds the FAISS index from docs/
+├── retrieval.py       # Vector search (FAISS), web search (DuckDuckGo), context fusion
+├── pipeline.py        # Orchestrates query processing → retrieval → prompt → LLM
+├── evaluation.py       # Latency logging + LLM-judged groundedness/correctness scoring
+├── benchmark.py        # Runs eval_set.json through the pipeline, reports accuracy/precision/recall/F1
+├── eval_set.json       # Labeled test questions (expected source doc + reference answer)
+├── docs/              # Internal documents indexed by ingest.py
+├── vectorstore/        # Persisted FAISS index (generated, gitignored)
+├── eval_logs/          # Per-run JSONL evaluation log (generated, gitignored)
+├── requirements.txt    # Python dependencies
+└── README.md          # This file
 ```
+
+---
+
+## 📏 Benchmarking
+
+`eval_set.json` holds a small labeled test set — questions with a known
+correct answer and known source document. Run it end to end with:
+
+```bash
+python benchmark.py
+```
+
+This reports:
+
+- **Answer accuracy** — % of answers an LLM judge rates as matching the reference answer
+- **Retrieval precision / recall / F1** — whether FAISS retrieved the actual correct source document for each question
+- **Groundedness** — the same 1–5 per-answer score used in normal chat, averaged
+- **Latency** — average end-to-end response time
+
+Full per-question results are saved to `eval_logs/benchmark_results.json`. These are real measured numbers from your own run, not fixed constants — expect them to vary by hardware and by which local model you're running.
 
 ---
 
 ## ⚙️ Configuration
 
-| Setting | Location | Default | Description |
-|---|---|---|---|
-| **LLM Model** | `assistant.py` line 7 | `llama3:8b` | Change to any Ollama-supported model |
-| **Search Tool** | `assistant.py` line 10 | DuckDuckGo | Swap with another LangChain search tool |
+All tunable settings live in `config.py`:
 
-To use a different model, update this line in `assistant.py`:
+| Setting | Default | Description |
+|---|---|---|
+| **LLM Model** | `deepseek-r1:7b` | Change to any Ollama-supported chat model already pulled on your machine |
+| **Embedding Model** | `nomic-embed-text` | Change to any Ollama-supported embedding model |
+| **CHUNK_SIZE / CHUNK_OVERLAP** | `500` / `50` | Document splitting for the FAISS index |
+| **TOP_K_VECTOR / TOP_K_WEB** | `3` / `2` | Max results pulled from each retrieval branch before fusion |
+
+To use a different model, update `config.py`:
 
 ```python
-llm = OllamaLLM(model="llama3:8b")  # ← change model name here
+LLM_MODEL = "deepseek-r1:7b"      # ← change chat model here (e.g. any `ollama list` entry)
+EMBED_MODEL = "nomic-embed-text"  # ← change embedding model here
 ```
+
+If you change `EMBED_MODEL`, re-run `python ingest.py` to rebuild the FAISS index with the new embeddings.
 
 ---
 
 ## 🛠️ Tech Stack
 
 - [**LangChain**](https://www.langchain.com/) — Orchestration framework for the RAG pipeline
-- [**Ollama**](https://ollama.com/) — Local LLM runtime
-- [**LLaMA 3**](https://ollama.com/library/llama3) — Meta's open-source large language model
-- [**DuckDuckGo Search**](https://pypi.org/project/duckduckgo-search/) — Privacy-focused web search API
+- [**Ollama**](https://ollama.com/) — Local LLM & embedding runtime
+- [**DeepSeek-R1**](https://ollama.com/library/deepseek-r1) — Open-source reasoning chat model (default `LLM_MODEL`; swappable for any Ollama chat model)
+- [**nomic-embed-text**](https://ollama.com/library/nomic-embed-text) — Local embedding model for the FAISS index
+- [**FAISS**](https://github.com/facebookresearch/faiss) — Vector similarity search over internal documents
+- [**ddgs**](https://pypi.org/project/ddgs/) — Privacy-focused DuckDuckGo web search API
 
 ---
 

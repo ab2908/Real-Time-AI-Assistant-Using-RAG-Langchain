@@ -1,0 +1,42 @@
+[
+  {
+    "question": "What is this assistant?",
+    "reference_answer": "It is a real-time AI assistant built with a RAG pipeline that combines internal documents indexed with FAISS and live DuckDuckGo web search, then answers using a locally-run LLM via Ollama.",
+    "expected_source": "sample_faq.md"
+  },
+  {
+    "question": "How do I add my own documents to the assistant?",
+    "reference_answer": "Drop .txt, .md, or .pdf files into the docs folder, then run python ingest.py to rebuild the FAISS index, and restart assistant.py so it picks up the new index.",
+    "expected_source": "sample_faq.md"
+  },
+  {
+    "question": "Why does the assistant also search the web instead of only using internal documents?",
+    "reference_answer": "Internal documents are good for private, stable knowledge but go stale and cannot cover current events, so web retrieval fills that gap and keeps answers grounded in up-to-date information.",
+    "expected_source": "sample_faq.md"
+  },
+  {
+    "question": "Does this assistant send any of my data to the cloud?",
+    "reference_answer": "No. The LLM and embedding model both run locally through Ollama; the only outbound network call is the DuckDuckGo web search.",
+    "expected_source": "sample_faq.md"
+  },
+  {
+    "question": "What are the main stages in this assistant's architecture?",
+    "reference_answer": "Query processing, then parallel vector search over internal docs (FAISS) and web retrieval (DuckDuckGo), then context fusion, top-K context selection, a prompt template, Llama 3 8B generation via Ollama, a grounded answer with sources, and finally an evaluation stage for latency and groundedness.",
+    "expected_source": "sample_notes.md"
+  },
+  {
+    "question": "How is answer accuracy evaluated since there is no labeled test set?",
+    "reference_answer": "Accuracy is approximated with an LLM-judged groundedness score, where the model rates from 1 to 5 how well the answer is supported only by the retrieved context.",
+    "expected_source": "sample_notes.md"
+  },
+  {
+    "question": "What gets logged during evaluation?",
+    "reference_answer": "Per-stage latency (vector search, web search, LLM generation, total) and the groundedness score are logged to eval_logs/runs.jsonl.",
+    "expected_source": "sample_notes.md"
+  },
+  {
+    "question": "What are the known limitations of this system?",
+    "reference_answer": "Groundedness scoring is a heuristic and not ground truth, DuckDuckGo search quality and rate limits vary, and the FAISS index must be rebuilt manually after documents change since it does not watch the folder.",
+    "expected_source": "sample_notes.md"
+  }
+]
